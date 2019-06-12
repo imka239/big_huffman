@@ -5,8 +5,8 @@
 
 int main(int32_t argc, char** argv) {
     std::string wr = "\tAvailable commands:\n"
-                     "\t\t--code\t\tencode a file\n"
-                     "\t\t--decode\tdecode a file\n";
+                     "\t\t--code\t\tencode a test\n"
+                     "\t\t--decode\tdecode a test\n";
 
     if (argc != 4) {
         std::cout << "\"Usage: huffman_archiver COMMAND SOURCE FILENAME\n" << wr;

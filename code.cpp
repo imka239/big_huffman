@@ -30,6 +30,7 @@ void file_handler::dfs(size_t now) {
 void file_handler::code(std::string to) {
     read_coding();
     std::set<std::pair<uint64_t, size_t > > que;
+    graph.clear();
     graph.resize(512);
     for (size_t i = 0; i < frequency_of_chars.size(); i++) {
         que.insert({frequency_of_chars[i], i});
@@ -45,8 +46,10 @@ void file_handler::code(std::string to) {
         que.insert({first.first + second.first, next});
         next++;
     }
+    ans.clear();
     ans.resize(frequency_of_chars.size());
     dfs(510);
+    ans_in_char.clear();
     ans_in_char.resize(frequency_of_chars.size());
     for (size_t i = 0; i < frequency_of_chars.size(); i++) {
         size_t pos = 0;
@@ -70,7 +73,7 @@ void file_handler::code(std::string to) {
         output_stream.write(reinterpret_cast<char*>(&frequency_of_chars[i]), 8);
     }
     if (!input_stream.is_open()) {
-        throw std::runtime_error("Source file opening failure");
+        throw std::runtime_error("Source test opening failure");
     }
     read_buffer.resize(buffer_max_size);
     do {

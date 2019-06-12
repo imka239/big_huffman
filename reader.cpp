@@ -19,7 +19,7 @@ void file_handler::read_in_buffer(std::ifstream &from) {
 void file_handler::read_coding() {
     std::ifstream input_stream(name_of_source, std::ios::binary);
     if (!input_stream.is_open()) {
-        throw std::runtime_error("Source file opening failure");
+        throw std::runtime_error("Source test opening failure");
     }
     read_buffer.resize(buffer_max_size);
     do {
