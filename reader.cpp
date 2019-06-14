@@ -2,11 +2,14 @@
 
 
 #include <fstream>
+#include <iostream>
 #include "huffman.hpp"
 
 using namespace huffman;
 
 file_handler::file_handler(std::string file) : name_of_source(file) {
+    frequency_of_chars.clear();
+    read_buffer.clear();
     frequency_of_chars.resize(256);
     read_buffer.resize(buffer_max_size);
 }
@@ -19,6 +22,7 @@ void file_handler::read_in_buffer(std::ifstream &from) {
 void file_handler::read_coding() {
     std::ifstream input_stream(name_of_source, std::ios::binary);
     if (!input_stream.is_open()) {
+        std::cout << name_of_source << std::endl;
         throw std::runtime_error("Source test opening failure");
     }
     read_buffer.resize(buffer_max_size);
