@@ -7,7 +7,7 @@ set(HUFFMAN
         huffman.hpp code.cpp reader.cpp)
 
 set(UTILITY
-        maûin.cpp)
+        main.cpp)
 
 set(TESTER
         gtest/gtest.h gtest/gtest_main.cc gtest/gtest-all.cc tester.cpp)
