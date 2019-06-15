@@ -4,7 +4,9 @@
 
 #include <fstream>
 #include "huffman.hpp"
+#include "file_worker.hpp"
 #include "gtest/gtest.h"
+
 bool FileEquals(const std::string &file1, const std::string &file2) {
 
     std::ifstream input_stream1(file1, std::ios::binary);
@@ -196,6 +198,13 @@ TEST(big_test, enter_only) {
     std::string t3 = "../test15/test_out.txt";
     code_decode(t1, t2, t3);
     EXPECT_TRUE(FileEquals(t1, t3));
+}
+
+TEST(exception, directory) {
+    std::string t1 = "../test100";
+    std::string t2 = "../test100/test_out.txt";
+    huffman::file_handler file1(t1);
+    EXPECT_ANY_THROW(file1.decode(t2));
 }
 
 //TEST(film, Batman) {

@@ -7,10 +7,6 @@
 #include <algorithm>
 
 using namespace huffman;
-std::vector<unsigned char> coded;
-std::vector<std::vector<unsigned char> > ans_in_char;
-std::vector<size_t> size;
-std::vector<std::vector<size_t > > graph;
 void file_handler::dfs(size_t now, size_t val) {
     if (now < frequency_of_chars.size()) {
         for (unsigned char i : coded) {
@@ -37,8 +33,7 @@ void file_handler::dfs(size_t now, size_t val) {
     }
 }
 
-void file_handler::code(std::string to) {
-    read_coding();
+void file_handler::build_tree() {
     std::set<std::pair<uint64_t, size_t > > que;
     graph.clear();
     graph.resize(512);
@@ -61,56 +56,57 @@ void file_handler::code(std::string to) {
     size.resize(frequency_of_chars.size());
     coded.clear();
     dfs(510, 0);
+}
+
+void file_handler::write_frequencies(std::ofstream &to) {
+    for (size_t i = 0; i < frequency_of_chars.size(); i++) {
+        to.write(reinterpret_cast<char*>(&frequency_of_chars[i]), 8);
+    }
+}
+
+void file_handler::code(std::vector<char> &buffer, std::vector<char> &ans) {
+    for (auto i : buffer) {
+        auto j_uns = static_cast<unsigned char>(i);
+        for (size_t j = 0; j < ans_in_char[j_uns].size(); j++) {
+            size_t sz = 8;
+            if (j == ans_in_char[j_uns].size() - 1) {
+                sz = size[j_uns];
+            }
+            if (pos + sz >= 8) {
+                next_char += (ans_in_char[j_uns][j] >> pos);
+                ans.push_back(next_char);
+                next_char = (ans_in_char[j_uns][j] << (8 - pos));
+                pos = (pos + sz) - 8;
+            } else {
+                next_char += (ans_in_char[j_uns][j] >> pos);
+                pos = (pos + sz);
+            }
+        }
+    }
+}
+
+void file_handler::code(std::string to) {
+    read_coding();
+    build_tree();
     std::ifstream input_stream(name_of_source, std::ios::binary);
     std::ofstream output_stream(to, std::ios::binary);
     if (!output_stream.is_open()) {
         throw std::runtime_error("Write test opening failure");
     }
-    for (size_t i = 0; i < frequency_of_chars.size(); i++) {
-        output_stream.write(reinterpret_cast<char*>(&frequency_of_chars[i]), 8);
-    }
+    write_frequencies(output_stream);
     if (!input_stream.is_open()) {
         throw std::runtime_error("Source test opening failure");
     }
     read_buffer.resize(buffer_max_size);
-    std::vector<unsigned char> next_chars;
-    unsigned char next_char = 0;
-    size_t pos = 0;
     do {
-        read_in_buffer(input_stream);
-        for (auto i : read_buffer) {
-            auto j_uns = static_cast<unsigned char>(i);
-            for (size_t j = 0; j < ans_in_char[j_uns].size(); j++) {
-                size_t sz = 8;
-                if (j == ans_in_char[j_uns].size() - 1) {
-                    sz = size[j_uns];
-                }
-                if (pos + sz >= 8) {
-                    next_char += (ans_in_char[j_uns][j] >> pos);
-//                    for (size_t h = pos; h < 8; h++) {
-//                        if (ans_in_char[j_uns][j] & power_of_two[h - pos]) {
-//                            next_char += power_of_two[h];
-//                        }
-//                    }
-                    output_stream.write(reinterpret_cast<const char *>(&next_char), 1);
-                    next_char = (ans_in_char[j_uns][j] << (8 - pos));
-//                    for (size_t h = 8; h < pos + sz; h++) {
-//                        if (ans_in_char[j_uns][j] & power_of_two[h - pos]) {
-//                            next_char += power_of_two[h - 8];
-//                        }
-//                    }
-                    pos = (pos + sz) - 8;
-                } else {
-                    next_char += (ans_in_char[j_uns][j] >> pos);
-//                    for (size_t h = pos; h < pos + sz; h++) {
-//                        if (ans_in_char[j_uns][j] & power_of_two[h - pos]) {
-//                            next_char += power_of_two[h];
-//                        }
-//                    }
-                    pos = (pos + sz);
-                }
-            }
+        input_stream.read(read_buffer.data(), buffer_max_size);
+        read_buffer.resize(static_cast<unsigned int>(input_stream.gcount()));
+        std::vector<char> next_chars;
+        code(read_buffer, next_chars);
+        for (auto i : next_chars) {
+            output_stream.write(reinterpret_cast<const char *>(&i), 1);
         }
+        next_chars.clear();
     } while (read_buffer.size() == buffer_max_size);
     if (pos != 0) {
         output_stream.write(reinterpret_cast<const char *>(&next_char), 1);
@@ -118,12 +114,37 @@ void file_handler::code(std::string to) {
     input_stream.close();
     output_stream.close();
 }
-//for (size_t j = 0; j < ans_in_char[j_uns].size(); j++) {
-//                output_stream.write(reinterpret_cast<const char *>(&ans_in_char[j_uns][j]), 1);
-//                next_char = 0;
-//                pos = 0;
-//            }
 
+void file_handler::decode(std::vector<char> & buffer, std::vector<size_t> & ans) {
+    for (auto j : buffer) {
+        auto j_uns = static_cast<unsigned char>(j);
+        auto byte_of_j = 0;
+        for (size_t i = 0; i < 8; i++) {
+            size_t ind = 0;
+            if (j_uns >= power_of_two[byte_of_j]) {
+                ind = 1;
+                j_uns -= power_of_two[byte_of_j];
+            }
+            byte_of_j++;
+            now = graph[now][ind];
+            if (now == 84) {
+                now = 84;
+            }
+            if (now < frequency_of_chars.size()) {
+                if (frequency_of_chars[now] == 0) {
+                    return;
+                }
+                frequency_of_chars[now]--;
+                ans.push_back(now);
+                now = 510;
+            }
+        }
+    }
+}
+
+void file_handler::read_frequencies(uint64_t a, size_t i) {
+    frequency_of_chars[i] = a;
+}
 
 void file_handler::decode(std::string to) {
     std::ifstream input_stream(name_of_source, std::ios::binary);
@@ -135,62 +156,25 @@ void file_handler::decode(std::string to) {
         throw std::runtime_error("Write test opening failure");
     }
     for (size_t i = 0; i < frequency_of_chars.size(); i++) {
-        input_stream.read(reinterpret_cast<char*> (&frequency_of_chars[i]), 8);
+        uint64_t a = 0;
+        input_stream.read(reinterpret_cast<char*> (&a), 8);
+        read_frequencies(a, i);
         if (input_stream.gcount() != 8) {
             throw std::runtime_error("Not enough frequencies");
         }
     }
-    std::set<std::pair<uint64_t, size_t > > que;
-    graph.clear();
-    graph.resize(512);
-    for (size_t i = 0; i < frequency_of_chars.size(); i++) {
-        que.insert({frequency_of_chars[i], i});
-    }
-    uint64_t next = frequency_of_chars.size();
-    while(que.size() > 1) {
-        auto first = *(que.begin());
-        que.erase(first);
-        auto second = *(que.begin());
-        que.erase(second);
-        graph[next].push_back(first.second);
-        graph[next].push_back(second.second);
-        que.insert({first.first + second.first, next});
-        next++;
-    }
-    ans_in_char.clear();
-    ans_in_char.resize(frequency_of_chars.size());
-    size.resize(frequency_of_chars.size());
-    coded.clear();
-    dfs(510, 0);
-    size_t now = 510;
+    build_tree();
     read_buffer.resize(buffer_max_size);
-    try {
-        do {
-            bool exit = false;
-            read_in_buffer(input_stream);
-            for (auto j : read_buffer) {
-                auto j_uns = static_cast<unsigned char>(j);
-                auto byte_of_j = 0;
-                for (size_t i = 0; i < 8; i++) {
-                    size_t ind = 0;
-                    if (j_uns >= power_of_two[byte_of_j]) {
-                        ind = 1;
-                        j_uns -= power_of_two[byte_of_j];
-                    }
-                    byte_of_j++;
-                    now = graph[now][ind];
-                    if (now < frequency_of_chars.size()) {
-                        if (frequency_of_chars[now] == 0) {
-                            throw true;
-                        }
-                        frequency_of_chars[now]--;
-                        output_stream.write(reinterpret_cast<char *>(&now), 1);
-                        now = 510;
-                    }
-                }
-            }
-        } while (read_buffer.size() == buffer_max_size);
-    } catch (bool x) {}
+    do {
+        input_stream.read(read_buffer.data(), buffer_max_size);
+        read_buffer.resize(static_cast<unsigned int>(input_stream.gcount()));
+        std::vector<size_t > ans;
+        decode(read_buffer, ans);
+        for (auto j : ans) {
+            output_stream.write(reinterpret_cast<const char *>(&j), 1);
+        }
+        ans.clear();
+    } while (read_buffer.size() == buffer_max_size);
     for (size_t i = 0; i < frequency_of_chars.size(); i++) {
         if (frequency_of_chars[i] != 0) {
             throw std::runtime_error("Frequencies not equals to symbols in file");
