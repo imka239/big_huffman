@@ -17,4 +17,4 @@ add_executable(utility ${UTILITY})
 add_executable(tester ${TESTER})
 
 target_link_libraries(utility engine)
-target_link_libraries(tester engine)
+target_link_libraries(tester engine pthread)

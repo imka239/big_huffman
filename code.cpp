@@ -73,6 +73,7 @@ void file_handler::code(std::string to) {
         throw std::runtime_error("Source test opening failure");
     }
     read_buffer.resize(buffer_max_size);
+    std::vector<unsigned char> next_chars;
     unsigned char next_char = 0;
     size_t pos = 0;
     do {
@@ -85,25 +86,27 @@ void file_handler::code(std::string to) {
                     sz = size[j_uns];
                 }
                 if (pos + sz >= 8) {
-                    for (size_t h = pos; h < 8; h++) {
-                        if (ans_in_char[j_uns][j] & power_of_two[h - pos]) {
-                            next_char += power_of_two[h];
-                        }
-                    }
+                    next_char += (ans_in_char[j_uns][j] >> pos);
+//                    for (size_t h = pos; h < 8; h++) {
+//                        if (ans_in_char[j_uns][j] & power_of_two[h - pos]) {
+//                            next_char += power_of_two[h];
+//                        }
+//                    }
                     output_stream.write(reinterpret_cast<const char *>(&next_char), 1);
-                    next_char = 0;
-                    for (size_t h = 8; h < pos + sz; h++) {
-                        if (ans_in_char[j_uns][j] & power_of_two[h - pos]) {
-                            next_char += power_of_two[h - 8];
-                        }
-                    }
-                    pos = (pos + sz) % 8;
+                    next_char = (ans_in_char[j_uns][j] << (8 - pos));
+//                    for (size_t h = 8; h < pos + sz; h++) {
+//                        if (ans_in_char[j_uns][j] & power_of_two[h - pos]) {
+//                            next_char += power_of_two[h - 8];
+//                        }
+//                    }
+                    pos = (pos + sz) - 8;
                 } else {
-                    for (size_t h = pos; h < pos + sz; h++) {
-                        if (ans_in_char[j_uns][j] & power_of_two[h - pos]) {
-                            next_char += power_of_two[h];
-                        }
-                    }
+                    next_char += (ans_in_char[j_uns][j] >> pos);
+//                    for (size_t h = pos; h < pos + sz; h++) {
+//                        if (ans_in_char[j_uns][j] & power_of_two[h - pos]) {
+//                            next_char += power_of_two[h];
+//                        }
+//                    }
                     pos = (pos + sz);
                 }
             }

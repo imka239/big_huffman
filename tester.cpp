@@ -2,7 +2,6 @@
 // Created by ASUS on 12.06.2019.
 //
 
-#include <unknwn.h>
 #include <fstream>
 #include "huffman.hpp"
 #include "gtest/gtest.h"
@@ -174,6 +173,29 @@ TEST(exception, empty_file) {
     std::string t2 = "../test14/test_out.txt";
     huffman::file_handler file1(t1);
     EXPECT_ANY_THROW(file1.decode(t2));
+}
+
+TEST(big_test, only_coding) {
+    std::string t1 = "../test8/test_in.txt";
+    std::string t2 = "../test8/test_coded.bin";
+    huffman::file_handler file1(t1);
+    EXPECT_NO_THROW(file1.code(t2));
+}
+
+
+TEST(big_test, only_decoding) {
+    std::string t1 = "../test8/test_coded.bin";
+    std::string t2 = "../test8/test_out.txt";
+    huffman::file_handler file1(t1);
+    EXPECT_NO_THROW(file1.decode(t2));
+}
+
+TEST(big_test, enter_only) {
+    std::string t1 = "../test15/test_in.txt";
+    std::string t2 = "../test15/test_coded.bin";
+    std::string t3 = "../test15/test_out.txt";
+    code_decode(t1, t2, t3);
+    EXPECT_TRUE(FileEquals(t1, t3));
 }
 
 //TEST(film, Batman) {
