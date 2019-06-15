@@ -85,36 +85,6 @@ void file_handler::code(std::vector<char> &buffer, std::vector<char> &ans) {
     }
 }
 
-void file_handler::code(std::string to) {
-    read_coding();
-    build_tree();
-    std::ifstream input_stream(name_of_source, std::ios::binary);
-    std::ofstream output_stream(to, std::ios::binary);
-    if (!output_stream.is_open()) {
-        throw std::runtime_error("Write test opening failure");
-    }
-    write_frequencies(output_stream);
-    if (!input_stream.is_open()) {
-        throw std::runtime_error("Source test opening failure");
-    }
-    read_buffer.resize(buffer_max_size);
-    do {
-        input_stream.read(read_buffer.data(), buffer_max_size);
-        read_buffer.resize(static_cast<unsigned int>(input_stream.gcount()));
-        std::vector<char> next_chars;
-        code(read_buffer, next_chars);
-        for (auto i : next_chars) {
-            output_stream.write(reinterpret_cast<const char *>(&i), 1);
-        }
-        next_chars.clear();
-    } while (read_buffer.size() == buffer_max_size);
-    if (pos != 0) {
-        output_stream.write(reinterpret_cast<const char *>(&next_char), 1);
-    }
-    input_stream.close();
-    output_stream.close();
-}
-
 void file_handler::decode(std::vector<char> & buffer, std::vector<size_t> & ans) {
     for (auto j : buffer) {
         auto j_uns = static_cast<unsigned char>(j);
@@ -144,44 +114,6 @@ void file_handler::decode(std::vector<char> & buffer, std::vector<size_t> & ans)
 
 void file_handler::read_frequencies(uint64_t a, size_t i) {
     frequency_of_chars[i] = a;
-}
-
-void file_handler::decode(std::string to) {
-    std::ifstream input_stream(name_of_source, std::ios::binary);
-    std::ofstream output_stream(to, std::ios::binary);
-    if (!input_stream.is_open()) {
-        throw std::runtime_error("Source test opening failure");
-    }
-    if (!output_stream.is_open()) {
-        throw std::runtime_error("Write test opening failure");
-    }
-    for (size_t i = 0; i < frequency_of_chars.size(); i++) {
-        uint64_t a = 0;
-        input_stream.read(reinterpret_cast<char*> (&a), 8);
-        read_frequencies(a, i);
-        if (input_stream.gcount() != 8) {
-            throw std::runtime_error("Not enough frequencies");
-        }
-    }
-    build_tree();
-    read_buffer.resize(buffer_max_size);
-    do {
-        input_stream.read(read_buffer.data(), buffer_max_size);
-        read_buffer.resize(static_cast<unsigned int>(input_stream.gcount()));
-        std::vector<size_t > ans;
-        decode(read_buffer, ans);
-        for (auto j : ans) {
-            output_stream.write(reinterpret_cast<const char *>(&j), 1);
-        }
-        ans.clear();
-    } while (read_buffer.size() == buffer_max_size);
-    for (size_t i = 0; i < frequency_of_chars.size(); i++) {
-        if (frequency_of_chars[i] != 0) {
-            throw std::runtime_error("Frequencies not equals to symbols in file");
-        }
-    }
-    input_stream.close();
-    output_stream.close();
 }
 
 //--decode test2.bin test2_out.txt
