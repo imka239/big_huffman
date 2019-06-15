@@ -54,17 +54,17 @@ void decode(const std::string& name_of_source, const std::string& to) {
         }
     }
     huff.build_tree();
-    huff.read_buffer.resize(huff.buffer_max_size);
+    std::vector<char> read_buffer; read_buffer.resize(32);
     do {
-        input_stream.read(huff.read_buffer.data(), huff.buffer_max_size);
-        huff.read_buffer.resize(static_cast<unsigned int>(input_stream.gcount()));
+        input_stream.read(read_buffer.data(), 32);
+        read_buffer.resize(static_cast<unsigned int>(input_stream.gcount()));
         std::vector<size_t > ans;
-        huff.decode(huff.read_buffer, ans);
+        huff.decode(read_buffer, ans);
         for (auto j : ans) {
             output_stream.write(reinterpret_cast<const char *>(&j), 1);
         }
         ans.clear();
-    } while (huff.read_buffer.size() == huff.buffer_max_size);
+    } while (read_buffer.size() == 32);
     for (size_t i = 0; i < huff.frequency_of_chars.size(); i++) {
         if (huff.frequency_of_chars[i] != 0) {
             throw std::runtime_error("Frequencies not equals to symbols in file");
@@ -81,12 +81,13 @@ void code(const std::string& name_of_source, const std::string& to) {
         std::cout << name_of_source << std::endl;
         throw std::runtime_error("Source test opening failure");
     }
-    huff.read_buffer.resize(huff.buffer_max_size);
+    std::vector<char> read_buffer;
+    read_buffer.resize(32);
     do {
-        input_stream.read(huff.read_buffer.data(), huff.buffer_max_size);
-        huff.read_buffer.resize(static_cast<unsigned int>(input_stream.gcount()));
-        huff.frequency_update(huff.read_buffer);
-    } while (huff.read_buffer.size() == huff.buffer_max_size);
+        input_stream.read(read_buffer.data(), 32);
+        read_buffer.resize(static_cast<unsigned int>(input_stream.gcount()));
+        huff.frequency_update(read_buffer);
+    } while (read_buffer.size() == 32);
     input_stream.close();
     huff.build_tree();
     std::ifstream input_stream_second(name_of_source, std::ios::binary);
@@ -98,17 +99,17 @@ void code(const std::string& name_of_source, const std::string& to) {
     if (!input_stream_second.is_open()) {
         throw std::runtime_error("Source test opening failure");
     }
-    huff.read_buffer.resize(huff.buffer_max_size);
+    read_buffer.resize(32);
     do {
-        input_stream_second.read(huff.read_buffer.data(), huff.buffer_max_size);
-        huff.read_buffer.resize(static_cast<unsigned int>(input_stream_second.gcount()));
+        input_stream_second.read(read_buffer.data(), 32);
+        read_buffer.resize(static_cast<unsigned int>(input_stream_second.gcount()));
         std::vector<char> next_chars;
-        huff.code(huff.read_buffer, next_chars);
+        huff.code(read_buffer, next_chars);
         for (auto i : next_chars) {
             output_stream.write(reinterpret_cast<const char *>(&i), 1);
         }
         next_chars.clear();
-    } while (huff.read_buffer.size() == huff.buffer_max_size);
+    } while (read_buffer.size() == 32);
     if (huff.pos != 0) {
         output_stream.write(reinterpret_cast<const char *>(&huff.next_char), 1);
     }

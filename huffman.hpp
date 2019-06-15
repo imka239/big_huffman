@@ -11,16 +11,17 @@
 namespace huffman{
 
     struct file_handler {
-        std::vector<char> read_buffer;
         std::vector<uint64_t> frequency_of_chars;
-        size_t buffer_max_size = 32;
-        unsigned char power_of_two[8] = {128, 64, 32, 16, 8, 4, 2, 1};
+        const unsigned char power_of_two[8] = {128, 64, 32, 16, 8, 4, 2, 1};
+    private:
         std::vector<unsigned char> coded;
         std::vector<std::vector<unsigned char> > ans_in_char;
         std::vector<size_t> size;
         std::vector<std::vector<size_t > > graph;
+    public:
         unsigned char next_char;
         size_t pos;
+    private:
         size_t now;
 
     private:
